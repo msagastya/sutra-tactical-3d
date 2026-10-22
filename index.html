@@ -2,15 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>SUTRA & SWORD | 3D Sovereign Tactical Engine</title>
-    <!-- Modern Web Fonts -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>SUTRA & SWORD | Vedic 3D Tactical Arsenal Engine</title>
+    <!-- Web Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-    <!-- Three.js and GSAP Libraries -->
+
+    <!-- Three.js Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GSAP for Smooth Springs & Physics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+    <!-- Three.js Post-Processing & Unreal Bloom Suite -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -18,13 +29,14 @@
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body, html {
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #050608;
+            background-color: #030406;
             font-family: 'Rajdhani', sans-serif;
             color: #E6C875;
         }
@@ -45,7 +57,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, transparent 35%, rgba(0, 0, 0, 0.85) 90%, #000000 100%);
+            background: radial-gradient(circle at center, transparent 30%, rgba(3, 4, 6, 0.8) 85%, #000000 100%);
             pointer-events: none;
             z-index: 2;
         }
@@ -56,14 +68,14 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%), linear-gradient(90deg, rgba(255, 215, 0, 0.02), rgba(0, 229, 255, 0.01), rgba(255, 215, 0, 0.02));
             background-size: 100% 3px, 6px 100%;
             pointer-events: none;
             z-index: 3;
-            opacity: 0.6;
+            opacity: 0.7;
         }
 
-        /* High-Authority HUD Overlay */
+        /* High-Authority Tactical HUD Overlay */
         .hud-overlay {
             position: absolute;
             top: 0;
@@ -75,7 +87,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 40px 30px;
+            padding: 24px 20px;
         }
 
         .header {
@@ -83,28 +95,29 @@
             flex-direction: column;
             align-items: center;
             text-align: center;
+            pointer-events: auto;
         }
 
         .channel-badge {
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 6px 16px;
-            border-radius: 6px;
-            background: rgba(15, 18, 24, 0.85);
-            border: 1px solid rgba(212, 175, 55, 0.5);
+            padding: 5px 14px;
+            border-radius: 20px;
+            background: rgba(10, 13, 20, 0.85);
+            border: 1px solid rgba(212, 175, 55, 0.4);
             box-shadow: 0 0 25px rgba(212, 175, 55, 0.2);
             backdrop-filter: blur(12px);
             font-family: 'Cinzel', serif;
-            font-size: 13px;
+            font-size: 11px;
             letter-spacing: 3px;
             color: #F5E296;
             text-transform: uppercase;
         }
 
         .live-dot {
-            width: 7px;
-            height: 7px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: #00FF88;
             box-shadow: 0 0 10px #00FF88;
@@ -112,97 +125,189 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 0.4; transform: scale(0.9); }
-            50% { opacity: 1; transform: scale(1.2); }
-            100% { opacity: 0.4; transform: scale(0.9); }
+            0% { opacity: 0.3; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.3); }
+            100% { opacity: 0.3; transform: scale(0.9); }
         }
 
         .hero-title {
-            margin-top: 14px;
+            margin-top: 10px;
             font-family: 'Cinzel', serif;
-            font-size: 32px;
+            font-size: 26px;
             font-weight: 900;
             letter-spacing: 2px;
             background: linear-gradient(180deg, #FFFFFF 0%, #F5E296 45%, #C99738 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
         }
 
         .hero-sub {
-            font-size: 14px;
-            letter-spacing: 4px;
+            font-size: 12px;
+            letter-spacing: 3.5px;
             color: rgba(220, 200, 140, 0.7);
             text-transform: uppercase;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
-        /* Telemetry Readouts */
+        /* Arsenal Selector Tabs */
+        .arsenal-nav {
+            margin-top: 14px;
+            display: flex;
+            gap: 8px;
+            background: rgba(8, 10, 15, 0.85);
+            padding: 4px;
+            border-radius: 30px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .arsenal-tab {
+            background: transparent;
+            border: none;
+            color: rgba(220, 200, 140, 0.7);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+        }
+
+        .arsenal-tab:hover {
+            color: #FFF;
+        }
+
+        .arsenal-tab.active {
+            background: linear-gradient(135deg, #D4AF37, #99781E);
+            color: #030406;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Mid-Screen Tactical Telemetry */
         .telemetry-row {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            font-size: 13px;
+            font-size: 12px;
             letter-spacing: 1.5px;
+            pointer-events: none;
         }
 
         .telemetry-card {
-            background: rgba(10, 13, 18, 0.75);
+            background: rgba(8, 10, 15, 0.75);
             border: 1px solid rgba(212, 175, 55, 0.25);
-            padding: 12px 18px;
+            padding: 8px 14px;
             border-radius: 8px;
             backdrop-filter: blur(10px);
         }
 
         .telemetry-label {
-            font-size: 10px;
+            font-size: 9px;
             color: rgba(220, 200, 140, 0.5);
             letter-spacing: 2px;
             text-transform: uppercase;
         }
 
         .telemetry-value {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: #FFF;
-            margin-top: 3px;
+            margin-top: 2px;
             font-family: 'Rajdhani', sans-serif;
         }
 
-        /* Interactive Controls Bar */
+        /* Material Switcher Pill Dock (Bottom Left) */
+        .material-dock {
+            position: absolute;
+            bottom: 95px;
+            left: 20px;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            pointer-events: auto;
+        }
+
+        .dock-title {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: rgba(212, 175, 55, 0.6);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .material-btn-group {
+            display: flex;
+            gap: 6px;
+            background: rgba(8, 10, 15, 0.85);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            backdrop-filter: blur(10px);
+        }
+
+        .mat-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: rgba(220, 200, 140, 0.65);
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .mat-btn.active {
+            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.2);
+            color: #FFF;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Bottom Controls Bar */
         .controls-bar {
             position: absolute;
-            bottom: 40px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
             display: flex;
-            gap: 14px;
+            gap: 10px;
             pointer-events: auto;
+            width: calc(100% - 40px);
+            max-width: 440px;
         }
 
         .interactive-btn {
-            background: linear-gradient(135deg, rgba(30, 26, 18, 0.9), rgba(12, 14, 18, 0.95));
-            border: 1px solid rgba(212, 175, 55, 0.5);
+            flex: 1;
+            background: linear-gradient(135deg, rgba(25, 22, 15, 0.9), rgba(10, 12, 16, 0.95));
+            border: 1px solid rgba(212, 175, 55, 0.4);
             color: #F5E296;
-            padding: 12px 24px;
+            padding: 12px 14px;
             border-radius: 8px;
             font-family: 'Rajdhani', sans-serif;
             font-weight: 700;
-            font-size: 14px;
-            letter-spacing: 2px;
+            font-size: 13px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.15);
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 6px;
         }
 
         .interactive-btn:hover {
             border-color: #F5E296;
-            background: linear-gradient(135deg, rgba(50, 42, 28, 0.95), rgba(20, 24, 32, 0.98));
             box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
             transform: translateY(-2px);
         }
@@ -211,18 +316,40 @@
             background: linear-gradient(135deg, #D4AF37, #99781E);
             color: #000;
             border-color: #FFF;
-            box-shadow: 0 0 35px rgba(212, 175, 55, 0.6);
+            box-shadow: 0 0 35px rgba(212, 175, 55, 0.7);
         }
 
-        /* Simulated Touch/Cursor Pointer for Automated Capture */
+        .gyro-btn {
+            background: rgba(8, 10, 15, 0.85);
+            border: 1px solid rgba(0, 229, 255, 0.4);
+            color: #00E5FF;
+            padding: 12px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s ease;
+        }
+
+        .gyro-btn.active {
+            background: rgba(0, 229, 255, 0.25);
+            box-shadow: 0 0 25px rgba(0, 229, 255, 0.6);
+        }
+
+        /* Virtual Pointer for 60 FPS Capture */
         #virtual-pointer {
             position: absolute;
             width: 32px;
             height: 32px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 235, 140, 0.9) 0%, rgba(212, 175, 55, 0.4) 50%, transparent 70%);
+            background: radial-gradient(circle, rgba(255, 235, 140, 0.95) 0%, rgba(212, 175, 55, 0.4) 50%, transparent 75%);
             border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 0 25px #D4AF37, 0 0 50px rgba(212, 175, 55, 0.6);
+            box-shadow: 0 0 30px #D4AF37, 0 0 60px rgba(212, 175, 55, 0.7);
             pointer-events: none;
             z-index: 100;
             transform: translate(-50%, -50%);
@@ -231,45 +358,33 @@
         }
 
         #virtual-pointer.clicking {
-            width: 44px;
-            height: 44px;
-            background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(212, 175, 55, 0.7) 60%, transparent 80%);
-            box-shadow: 0 0 40px #FFF, 0 0 70px #D4AF37;
+            width: 46px;
+            height: 46px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(212, 175, 55, 0.8) 60%, transparent 85%);
+            box-shadow: 0 0 45px #FFF, 0 0 85px #D4AF37;
         }
 
         /* 3D Dynamic Floating Node Tooltips */
         .floating-label {
             position: absolute;
-            background: rgba(10, 13, 18, 0.9);
+            background: rgba(8, 10, 15, 0.92);
             border: 1px solid rgba(212, 175, 55, 0.6);
             color: #FFF;
-            padding: 8px 14px;
+            padding: 6px 12px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             letter-spacing: 1.5px;
             pointer-events: none;
-            box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
-            transform: translate(-50%, -100%);
-            white-space: nowrap;
-            transition: opacity 0.3s;
             z-index: 15;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), 0 0 10px rgba(212, 175, 55, 0.3);
+            white-space: nowrap;
+            transition: opacity 0.25s ease;
+            backdrop-filter: blur(8px);
             display: flex;
             align-items: center;
             gap: 6px;
-        }
-
-        .floating-label::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 5px solid rgba(212, 175, 55, 0.6);
         }
 
         .node-accent {
@@ -291,50 +406,90 @@
         <!-- Header -->
         <div class="header">
             <div class="channel-badge">
-                <div class="live-dot"></div>
-                SUTRA & SWORD • TACTICAL ENGINE
+                <span class="live-dot"></span>
+                <span>SUTRA & SWORD | VEDIC ENGINE 3.0</span>
             </div>
-            <h1 class="hero-title">SUDARSHANA PROTOCOL</h1>
-            <div class="hero-sub">INTERACTIVE SACRED GEOMETRY • 3D ARENA</div>
+            <h1 class="hero-title" id="artifact-title">SUDARSHANA CHAKRA</h1>
+            <p class="hero-sub" id="artifact-sub">KINETIC DISK OF SUPREME DISCRIMINATION</p>
+
+            <!-- Arsenal Selector -->
+            <div class="arsenal-nav">
+                <button class="arsenal-tab active" onclick="switchArsenal('chakra')">🔱 CHAKRA</button>
+                <button class="arsenal-tab" onclick="switchArsenal('trishula')">⚡ TRISHULA</button>
+                <button class="arsenal-tab" onclick="switchArsenal('vyuha')">🛡️ CHAKRAVYUHA</button>
+            </div>
         </div>
 
-        <!-- Telemetry Bottom Row -->
+        <!-- Telemetry Row -->
         <div class="telemetry-row">
             <div class="telemetry-card">
                 <div class="telemetry-label">SYSTEM STATE</div>
                 <div class="telemetry-value" id="state-val">ACTIVE RESTRAINT</div>
             </div>
             <div class="telemetry-card" style="text-align: right;">
-                <div class="telemetry-label">CORE ANGULAR VELOCITY</div>
-                <div class="telemetry-value" id="rot-val">2.84 RAD/S</div>
+                <div class="telemetry-label">CORE ANGULAR FREQ</div>
+                <div class="telemetry-value" id="rot-val">120.4 RPM</div>
             </div>
         </div>
     </div>
 
-    <!-- Interactive Buttons -->
+    <!-- Material Switcher Dock -->
+    <div class="material-dock">
+        <div class="dock-title">FORGE MATERIAL</div>
+        <div class="material-btn-group">
+            <button class="mat-btn active" onclick="applyMaterial('gold')">GOLD</button>
+            <button class="mat-btn" onclick="applyMaterial('wootz')">WOOTZ</button>
+            <button class="mat-btn" onclick="applyMaterial('obsidian')">OBSIDIAN</button>
+            <button class="mat-btn" onclick="applyMaterial('plasma')">PLASMA</button>
+        </div>
+    </div>
+
+    <!-- Bottom Interactive Controls Bar -->
     <div class="controls-bar">
         <button class="interactive-btn" id="btn-explode" onclick="toggleExplodedView()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
-            <span id="explode-text">EXPLODE LAYERS</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+            <span id="explode-text">EXPLODE CAD</span>
         </button>
         <button class="interactive-btn" id="btn-overdrive" onclick="toggleOverdrive()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             <span>KSHATRIYA SURGE</span>
+        </button>
+        <button class="gyro-btn" id="btn-gyro" onclick="toggleGyro()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span>GYRO</span>
         </button>
     </div>
 
     <div id="label-container"></div>
 
     <script>
-        // --- 1. Web Audio Synthesizer (Instant Dynamic Sound Effects) ---
+        // --- 1. Procedural Web Audio Engine ---
         class TacticalAudioEngine {
             constructor() {
                 this.ctx = null;
+                this.droneOsc = null;
+                this.droneGain = null;
             }
             init() {
                 if (!this.ctx) {
                     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    // Continuous sub-bass drone
+                    this.droneOsc = this.ctx.createOscillator();
+                    this.droneGain = this.ctx.createGain();
+                    this.droneOsc.type = 'triangle';
+                    this.droneOsc.frequency.setValueAtTime(45, this.ctx.currentTime);
+                    this.droneGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+                    this.droneOsc.connect(this.droneGain);
+                    this.droneGain.connect(this.ctx.destination);
+                    this.droneOsc.start();
                 }
+            }
+            updateDrone(rpmNorm) {
+                if (!this.ctx || !this.droneGain) return;
+                const freq = 40 + rpmNorm * 65;
+                const gain = 0.05 + Math.min(rpmNorm * 0.25, 0.2);
+                this.droneOsc.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.08);
+                this.droneGain.gain.setTargetAtTime(gain, this.ctx.currentTime, 0.08);
             }
             playWhoosh(intensity = 1.0) {
                 if (!this.ctx) return;
@@ -343,25 +498,25 @@
                 const filter = this.ctx.createBiquadFilter();
 
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(60, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(180 * intensity, this.ctx.currentTime + 0.15);
-                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.4);
+                osc.frequency.setValueAtTime(70, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(240 * intensity, this.ctx.currentTime + 0.12);
+                osc.frequency.exponentialRampToValueAtTime(35, this.ctx.currentTime + 0.35);
 
                 filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(300, this.ctx.currentTime);
-                filter.frequency.linearRampToValueAtTime(1200 * intensity, this.ctx.currentTime + 0.15);
-                filter.frequency.linearRampToValueAtTime(200, this.ctx.currentTime + 0.4);
+                filter.frequency.setValueAtTime(350, this.ctx.currentTime);
+                filter.frequency.linearRampToValueAtTime(1400 * intensity, this.ctx.currentTime + 0.12);
+                filter.frequency.linearRampToValueAtTime(150, this.ctx.currentTime + 0.35);
 
                 gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.3 * intensity, this.ctx.currentTime + 0.08);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+                gain.gain.linearRampToValueAtTime(0.35 * intensity, this.ctx.currentTime + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.38);
 
                 osc.connect(filter);
                 filter.connect(gain);
                 gain.connect(this.ctx.destination);
 
                 osc.start();
-                osc.stop(this.ctx.currentTime + 0.45);
+                osc.stop(this.ctx.currentTime + 0.4);
             }
             playImpact(freq = 55) {
                 if (!this.ctx) return;
@@ -369,44 +524,52 @@
                 const gain = this.ctx.createGain();
 
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq * 1.8, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + 0.08);
-                osc.frequency.exponentialRampToValueAtTime(28, this.ctx.currentTime + 0.5);
+                osc.frequency.setValueAtTime(freq * 2.2, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + 0.07);
+                osc.frequency.exponentialRampToValueAtTime(24, this.ctx.currentTime + 0.55);
 
-                gain.gain.setValueAtTime(0.6, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.55);
+                gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.6);
 
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
 
                 osc.start();
-                osc.stop(this.ctx.currentTime + 0.6);
+                osc.stop(this.ctx.currentTime + 0.65);
             }
-            playChime() {
+            playDamru() {
                 if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
+                // Dual percussive strike
+                [0, 0.1].forEach(delay => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(120, this.ctx.currentTime + delay);
+                    osc.frequency.exponentialRampToValueAtTime(45, this.ctx.currentTime + delay + 0.08);
 
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(880, this.ctx.currentTime);
-                osc.frequency.setValueAtTime(1320, this.ctx.currentTime + 0.05);
+                    gain.gain.setValueAtTime(0.5, this.ctx.currentTime + delay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + 0.12);
 
-                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
-
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.85);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(this.ctx.currentTime + delay);
+                    osc.stop(this.ctx.currentTime + delay + 0.15);
+                });
             }
         }
         const audioEngine = new TacticalAudioEngine();
 
-        // --- 2. Three.js Scene Setup ---
+        // Safe Haptic Trigger
+        function triggerHaptic(duration = 15) {
+            if (navigator.vibrate) {
+                try { navigator.vibrate(duration); } catch (e) {}
+            }
+        }
+
+        // --- 2. Three.js Scene & Camera ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x050608, 0.04);
+        scene.fog = new THREE.FogExp2(0x030406, 0.035);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
         camera.position.set(0, 0, 11);
@@ -415,160 +578,281 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.3;
+        renderer.toneMappingExposure = 1.25;
         container.appendChild(renderer.domElement);
 
-        // --- 3. Cinema Lighting ---
-        const ambientLight = new THREE.AmbientLight(0xffeedd, 0.6);
+        // --- 3. Unreal Bloom Post-Processing ---
+        const renderPass = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.5,  // strength
+            0.4,  // radius
+            0.28  // threshold
+        );
+
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+
+        // --- 4. Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xfff0dd, 0.65);
         scene.add(ambientLight);
 
-        const keyGoldLight = new THREE.DirectionalLight(0xFFD700, 3.5);
+        const keyGoldLight = new THREE.DirectionalLight(0xFFD700, 3.8);
         keyGoldLight.position.set(5, 8, 7);
         scene.add(keyGoldLight);
 
-        const rimCyanLight = new THREE.PointLight(0x00E5FF, 2.8, 15);
+        const rimCyanLight = new THREE.PointLight(0x00E5FF, 3.0, 16);
         rimCyanLight.position.set(-6, -4, -3);
         scene.add(rimCyanLight);
 
-        const coreGlowLight = new THREE.PointLight(0xFFAA00, 4.0, 8);
+        const coreGlowLight = new THREE.PointLight(0xFFAA00, 4.5, 9);
         coreGlowLight.position.set(0, 0, 1);
         scene.add(coreGlowLight);
 
-        // --- 4. Sudarshana Chakra Procedural Architecture ---
+        // --- 5. Global Dynamic Material Palette ---
+        const materials = {
+            primary: new THREE.MeshStandardMaterial({
+                color: 0xD4AF37,
+                metalness: 0.92,
+                roughness: 0.18,
+                emissive: 0x442D05,
+                emissiveIntensity: 0.25
+            }),
+            secondary: new THREE.MeshStandardMaterial({
+                color: 0x1A1F26,
+                metalness: 0.85,
+                roughness: 0.35,
+                emissive: 0x0A0D12,
+                emissiveIntensity: 0.1
+            }),
+            core: new THREE.MeshStandardMaterial({
+                color: 0xFFF2A3,
+                metalness: 0.2,
+                roughness: 0.1,
+                emissive: 0xFFAA00,
+                emissiveIntensity: 1.6
+            }),
+            runes: new THREE.MeshBasicMaterial({
+                color: 0xFFD700,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.8
+            })
+        };
+
+        const materialPresets = {
+            gold: {
+                primary: { color: 0xD4AF37, metalness: 0.92, roughness: 0.18, emissive: 0x442D05, emissiveIntensity: 0.25 },
+                secondary: { color: 0x1A1F26, metalness: 0.85, roughness: 0.35, emissive: 0x0A0D12, emissiveIntensity: 0.1 },
+                core: { color: 0xFFF2A3, emissive: 0xFFAA00, emissiveIntensity: 1.6 },
+                bloom: 1.5,
+                rimLight: 0x00E5FF
+            },
+            wootz: {
+                primary: { color: 0x8A929A, metalness: 0.95, roughness: 0.28, emissive: 0x11161A, emissiveIntensity: 0.15 },
+                secondary: { color: 0x0E1114, metalness: 0.9, roughness: 0.4, emissive: 0x050709, emissiveIntensity: 0.05 },
+                core: { color: 0xE8F4F8, emissive: 0x7097A8, emissiveIntensity: 1.3 },
+                bloom: 1.2,
+                rimLight: 0xFFFFFF
+            },
+            obsidian: {
+                primary: { color: 0x0D0F12, metalness: 0.98, roughness: 0.12, emissive: 0x00E5FF, emissiveIntensity: 0.35 },
+                secondary: { color: 0x050608, metalness: 0.7, roughness: 0.5, emissive: 0x003344, emissiveIntensity: 0.2 },
+                core: { color: 0x00E5FF, emissive: 0x00E5FF, emissiveIntensity: 2.2 },
+                bloom: 2.0,
+                rimLight: 0x00E5FF
+            },
+            plasma: {
+                primary: { color: 0x9D00FF, metalness: 0.8, roughness: 0.2, emissive: 0x7B00FF, emissiveIntensity: 0.7 },
+                secondary: { color: 0x120024, metalness: 0.9, roughness: 0.3, emissive: 0x3A0066, emissiveIntensity: 0.4 },
+                core: { color: 0x00FFFF, emissive: 0x00FFFF, emissiveIntensity: 2.8 },
+                bloom: 2.5,
+                rimLight: 0xFF00AA
+            }
+        };
+
+        window.applyMaterial = function(presetName) {
+            audioEngine.init();
+            audioEngine.playWhoosh(1.2);
+            triggerHaptic(20);
+
+            document.querySelectorAll('.mat-btn').forEach(b => b.classList.remove('active'));
+            const activeBtn = Array.from(document.querySelectorAll('.mat-btn')).find(b => b.innerText.toLowerCase() === presetName);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const p = materialPresets[presetName];
+            gsap.to(materials.primary.color, { r: ((p.primary.color >> 16) & 255) / 255, g: ((p.primary.color >> 8) & 255) / 255, b: (p.primary.color & 255) / 255, duration: 0.5 });
+            gsap.to(materials.primary.emissive, { r: ((p.primary.emissive >> 16) & 255) / 255, g: ((p.primary.emissive >> 8) & 255) / 255, b: (p.primary.emissive & 255) / 255, duration: 0.5 });
+            materials.primary.emissiveIntensity = p.primary.emissiveIntensity;
+
+            gsap.to(materials.core.emissive, { r: ((p.core.emissive >> 16) & 255) / 255, g: ((p.core.emissive >> 8) & 255) / 255, b: (p.core.emissive & 255) / 255, duration: 0.5 });
+            materials.core.emissiveIntensity = p.core.emissiveIntensity;
+
+            gsap.to(bloomPass, { strength: p.bloom, duration: 0.6 });
+            gsap.to(rimCyanLight.color, { r: ((p.rimLight >> 16) & 255) / 255, g: ((p.rimLight >> 8) & 255) / 255, b: (p.rimLight & 255) / 255, duration: 0.6 });
+        };
+
+        // --- 6. ARSENAL CREATION (Chakra, Trishula, Chakravyuha) ---
+        const masterGroup = new THREE.Group();
+        scene.add(masterGroup);
+
+        // A. Sudarshana Chakra Group
         const chakraGroup = new THREE.Group();
-        scene.add(chakraGroup);
+        masterGroup.add(chakraGroup);
 
-        // Custom Gold Physical Materials
-        const goldMat = new THREE.MeshStandardMaterial({
-            color: 0xD4AF37,
-            metalness: 0.92,
-            roughness: 0.18,
-            emissive: 0x442D05,
-            emissiveIntensity: 0.2
-        });
-
-        const darkObsidianMat = new THREE.MeshStandardMaterial({
-            color: 0x111318,
-            metalness: 0.85,
-            roughness: 0.28
-        });
-
-        const glowingGoldWireMat = new THREE.MeshBasicMaterial({
-            color: 0xFFE082,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.35
-        });
-
-        // Layer 1: Core Bindu & Inner Hub
         const layer1_Hub = new THREE.Group();
-        const coreGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.25, 32);
-        const coreMesh = new THREE.Mesh(coreGeo, goldMat);
-        coreMesh.rotation.x = Math.PI / 2;
-        layer1_Hub.add(coreMesh);
-
-        // Inner Sacred Star (Hexagram / Shatkona)
-        for (let i = 0; i < 2; i++) {
-            const triGeo = new THREE.ConeGeometry(0.55, 0.2, 3);
-            const triMesh = new THREE.Mesh(triGeo, goldMat);
-            triMesh.rotation.z = (i * Math.PI) + (Math.PI / 6);
-            triMesh.position.z = 0.14;
-            layer1_Hub.add(triMesh);
-        }
-        chakraGroup.add(layer1_Hub);
-
-        // Layer 2: 16-Blade Kinetic Serrated Saw
         const layer2_Blades = new THREE.Group();
-        const bladeCount = 16;
-        for (let b = 0; b < bladeCount; b++) {
-            const angle = (b / bladeCount) * Math.PI * 2;
-            const bladeShape = new THREE.Shape();
-            bladeShape.moveTo(0, 0.7);
-            bladeShape.lineTo(0.35, 1.3);
-            bladeShape.lineTo(0.0, 2.1);
-            bladeShape.lineTo(-0.15, 1.4);
-            bladeShape.closePath();
-
-            const extrudeSettings = { depth: 0.08, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.03, bevelThickness: 0.03 };
-            const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, extrudeSettings);
-            const bladeMesh = new THREE.Mesh(bladeGeo, goldMat);
-            bladeMesh.rotation.z = angle;
-            bladeMesh.position.z = -0.04;
-            layer2_Blades.add(bladeMesh);
-        }
-        chakraGroup.add(layer2_Blades);
-
-        // Layer 3: Concentric Yantra Rings & Runes
         const layer3_Rings = new THREE.Group();
-        const ringGeo1 = new THREE.TorusGeometry(2.35, 0.05, 16, 100);
-        const ringMesh1 = new THREE.Mesh(ringGeo1, goldMat);
-        layer3_Rings.add(ringMesh1);
-
-        const ringGeo2 = new THREE.TorusGeometry(2.8, 0.04, 16, 100);
-        const ringMesh2 = new THREE.Mesh(ringGeo2, goldMat);
-        layer3_Rings.add(ringMesh2);
-
-        const wireRingGeo = new THREE.TorusGeometry(3.1, 0.12, 8, 48);
-        const wireRingMesh = new THREE.Mesh(wireRingGeo, glowingGoldWireMat);
-        layer3_Rings.add(wireRingMesh);
-        chakraGroup.add(layer3_Rings);
-
-        // Layer 4: Tactical HUD Orbit & Data Nodes
         const layer4_HUD = new THREE.Group();
-        const hudOrbitGeo = new THREE.TorusGeometry(3.6, 0.02, 16, 128);
-        const hudOrbitMesh = new THREE.Mesh(hudOrbitGeo, new THREE.MeshBasicMaterial({ color: 0xD4AF37, transparent: true, opacity: 0.4 }));
-        layer4_HUD.add(hudOrbitMesh);
 
-        // 3 Interactive Tactical Nodes
-        const nodesData = [
-            { id: "node1", title: "IMMORTAL OBSERVER", subtitle: "GITA 2.20", angle: 0, radius: 3.6 },
-            { id: "node2", title: "ASYMMETRIC UPSIDE", subtitle: "GITA 2.37", angle: (Math.PI * 2) / 3, radius: 3.6 },
-            { id: "node3", title: "SOVEREIGN STATURE", subtitle: "GITA 2.34", angle: (Math.PI * 4) / 3, radius: 3.6 }
-        ];
-
-        const nodeMeshes = [];
-        nodesData.forEach((nd) => {
-            const nodeGrp = new THREE.Group();
-            const nGeo = new THREE.SphereGeometry(0.12, 16, 16);
-            const nMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: 0xD4AF37, emissiveIntensity: 1.5, roughness: 0.1 });
-            const nMesh = new THREE.Mesh(nGeo, nMat);
-            nodeGrp.add(nMesh);
-
-            // Glowing Outer Ring
-            const nRingGeo = new THREE.TorusGeometry(0.22, 0.02, 16, 32);
-            const nRingMesh = new THREE.Mesh(nRingGeo, new THREE.MeshBasicMaterial({ color: 0xD4AF37 }));
-            nodeGrp.add(nRingMesh);
-
-            nodeGrp.position.x = Math.cos(nd.angle) * nd.radius;
-            nodeGrp.position.y = Math.sin(nd.angle) * nd.radius;
-            layer4_HUD.add(nodeGrp);
-
-            nodeMeshes.push({ group: nodeGrp, data: nd });
-        });
+        chakraGroup.add(layer1_Hub);
+        chakraGroup.add(layer2_Blades);
+        chakraGroup.add(layer3_Rings);
         chakraGroup.add(layer4_HUD);
 
-        // --- 5. Volumetric Golden Ember Particles ---
+        // Hub & Sacred Geometry Core
+        const coreGeo = new THREE.OctahedronGeometry(0.85, 2);
+        const coreMesh = new THREE.Mesh(coreGeo, materials.core);
+        layer1_Hub.add(coreMesh);
+
+        const wireCoreGeo = new THREE.IcosahedronGeometry(1.15, 1);
+        const wireCoreMesh = new THREE.Mesh(wireCoreGeo, materials.runes);
+        layer1_Hub.add(wireCoreMesh);
+
+        // 32 Precision Serrated Kinetic Blades
+        const bladeCount = 32;
+        const bladeShape = new THREE.Shape();
+        bladeShape.moveTo(0, 0);
+        bladeShape.lineTo(0.35, 1.8);
+        bladeShape.bezierCurveTo(0.45, 2.3, 0.25, 2.6, 0.05, 2.85);
+        bladeShape.lineTo(-0.15, 2.3);
+        bladeShape.lineTo(-0.25, 0.5);
+        bladeShape.closePath();
+
+        const extrudeSettings = { depth: 0.08, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.04, bevelThickness: 0.04 };
+        const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, extrudeSettings);
+
+        for (let i = 0; i < bladeCount; i++) {
+            const angle = (i / bladeCount) * Math.PI * 2;
+            const bladeMesh = new THREE.Mesh(bladeGeo, materials.primary);
+            bladeMesh.position.x = Math.cos(angle) * 1.5;
+            bladeMesh.position.y = Math.sin(angle) * 1.5;
+            bladeMesh.rotation.z = angle - Math.PI / 2 + 0.25;
+            bladeMesh.scale.set(0.9, 0.9, 0.9);
+            layer2_Blades.add(bladeMesh);
+        }
+
+        // Concentric Tactical Rings
+        const innerTorus = new THREE.Mesh(new THREE.TorusGeometry(1.65, 0.07, 16, 64), materials.secondary);
+        layer3_Rings.add(innerTorus);
+
+        const outerTorus = new THREE.Mesh(new THREE.TorusGeometry(3.6, 0.09, 16, 64), materials.primary);
+        layer3_Rings.add(outerTorus);
+
+        // Sacred Hexagram Ring
+        for (let r = 0; r < 2; r++) {
+            const hex = new THREE.Mesh(new THREE.RingGeometry(1.8, 1.88, 3), materials.runes);
+            hex.rotation.z = (r * Math.PI) / 3;
+            layer3_Rings.add(hex);
+        }
+
+        // B. Trishula Group (Lord Shiva's Cosmic Trident)
+        const trishulaGroup = new THREE.Group();
+        trishulaGroup.visible = false;
+        masterGroup.add(trishulaGroup);
+
+        // Shaft
+        const shaftMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 7.5, 20), materials.secondary);
+        shaftMesh.position.y = -2.2;
+        trishulaGroup.add(shaftMesh);
+
+        // Damru (Hourglass Drum)
+        const damruTop = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.45, 16), materials.primary);
+        damruTop.position.y = 0.25;
+        damruTop.rotation.x = Math.PI;
+        const damruBottom = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.45, 16), materials.primary);
+        damruBottom.position.y = -0.25;
+        const damruCenter = new THREE.Mesh(new THREE.TorusGeometry(0.12, 0.05, 8, 24), materials.core);
+        trishulaGroup.add(damruTop);
+        trishulaGroup.add(damruBottom);
+        trishulaGroup.add(damruCenter);
+
+        // Central Trident Spearhead
+        const centralProng = new THREE.Mesh(new THREE.ConeGeometry(0.24, 2.6, 4), materials.primary);
+        centralProng.position.y = 2.4;
+        centralProng.scale.set(1.0, 1.0, 0.35);
+        trishulaGroup.add(centralProng);
+
+        // Outer Curved Prongs
+        const outerProngCurve = new THREE.TorusGeometry(1.3, 0.09, 16, 32, Math.PI);
+        const prongBase = new THREE.Mesh(outerProngCurve, materials.primary);
+        prongBase.rotation.z = Math.PI;
+        prongBase.position.y = 1.3;
+        trishulaGroup.add(prongBase);
+
+        const leftTip = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.4, 4), materials.primary);
+        leftTip.position.set(-1.3, 2.0, 0);
+        leftTip.scale.set(1.0, 1.0, 0.4);
+        leftTip.rotation.z = -0.15;
+        trishulaGroup.add(leftTip);
+
+        const rightTip = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.4, 4), materials.primary);
+        rightTip.position.set(1.3, 2.0, 0);
+        rightTip.scale.set(1.0, 1.0, 0.4);
+        rightTip.rotation.z = 0.15;
+        trishulaGroup.add(rightTip);
+
+        // C. Chakravyuha Group (7-Tier Rotating Labyrinth)
+        const vyuhaGroup = new THREE.Group();
+        vyuhaGroup.visible = false;
+        masterGroup.add(vyuhaGroup);
+
+        const vyuhaRings = [];
+        for (let v = 1; v <= 7; v++) {
+            const vGroup = new THREE.Group();
+            const radius = 0.6 + v * 0.52;
+            const segments = 12 + v * 4;
+            // Create ring with a tactical breach gate (arc = 1.85 * PI)
+            const ringGeo = new THREE.TorusGeometry(radius, 0.05 + (v === 7 ? 0.04 : 0), 12, segments, Math.PI * 1.82);
+            const ringMesh = new THREE.Mesh(ringGeo, v % 2 === 0 ? materials.primary : materials.secondary);
+            ringMesh.rotation.x = Math.PI / 2.3;
+            vGroup.add(ringMesh);
+
+            // Bastion points along the ring
+            for (let b = 0; b < v * 2; b++) {
+                const bAngle = (b / (v * 2)) * Math.PI * 1.8;
+                const bastion = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.12), materials.core);
+                bastion.position.set(Math.cos(bAngle) * radius, Math.sin(bAngle) * radius * 0.38, 0);
+                vGroup.add(bastion);
+            }
+
+            vyuhaGroup.add(vGroup);
+            vyuhaRings.push({ group: vGroup, speed: (v % 2 === 0 ? 1 : -1) * (0.15 + (7 - v) * 0.05) });
+        }
+
+        // Center Commander Nucleus
+        const guruDronaCore = new THREE.Mesh(new THREE.IcosahedronGeometry(0.45, 1), materials.core);
+        vyuhaGroup.add(guruDronaCore);
+
+        // --- 7. Volumetric Ambient Embers & Starfield ---
         const particleCount = 450;
         const particleGeo = new THREE.BufferGeometry();
         const particlePos = new Float32Array(particleCount * 3);
         const particleVel = [];
 
-        for (let p = 0; p < particleCount * 3; p += 3) {
-            particlePos[p] = (Math.random() - 0.5) * 16;
-            particlePos[p + 1] = (Math.random() - 0.5) * 16;
-            particlePos[p + 2] = (Math.random() - 0.5) * 8;
-
+        for (let i = 0; i < particleCount; i++) {
+            particlePos[i * 3] = (Math.random() - 0.5) * 16;
+            particlePos[i * 3 + 1] = (Math.random() - 0.5) * 16;
+            particlePos[i * 3 + 2] = (Math.random() - 0.5) * 12;
             particleVel.push({
-                x: (Math.random() - 0.5) * 0.008,
-                y: Math.random() * 0.015 + 0.005,
-                z: (Math.random() - 0.5) * 0.008,
+                y: 0.004 + Math.random() * 0.008,
                 phase: Math.random() * Math.PI * 2
             });
         }
         particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
-
         const particleMat = new THREE.PointsMaterial({
-            color: 0xF5E296,
+            color: 0xFFD700,
             size: 0.08,
             transparent: true,
             opacity: 0.75,
@@ -577,176 +861,237 @@
         const particleSystem = new THREE.Points(particleGeo, particleMat);
         scene.add(particleSystem);
 
-        // --- 6. Interactive State & Touch/Mouse Momentum Physics ---
+        // --- 8. Interaction & Physics Engine ---
+        let currentArsenal = 'chakra';
+        let isDragging = false;
+        let previousMousePos = { x: 0, y: 0 };
+        let targetRotationX = 0;
+        let targetRotationY = 0;
+        let angularVelocity = 0.035;
+        let targetAngularVelocity = 0.035;
         let isExploded = false;
         let isOverdrive = false;
-        let angularVelocity = 0.02;
-        let targetAngularVelocity = 0.02;
+        let gyroActive = false;
 
-        let isDragging = false;
-        let previousMouseX = 0;
-        let previousMouseY = 0;
-        let targetRotationX = 0.25;
-        let targetRotationY = 0;
-
-        window.addEventListener('mousedown', (e) => {
-            audioEngine.init();
+        // Interaction Handlers (Touch & Mouse)
+        window.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.controls-bar') || e.target.closest('.arsenal-nav') || e.target.closest('.material-dock')) return;
             isDragging = true;
-            previousMouseX = e.clientX;
-            previousMouseY = e.clientY;
-            audioEngine.playWhoosh(1.0);
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const deltaX = e.clientX - previousMouseX;
-            const deltaY = e.clientY - previousMouseY;
-
-            targetRotationY += deltaX * 0.006;
-            targetRotationX += deltaY * 0.006;
-
-            angularVelocity += Math.abs(deltaX) * 0.0008;
-
-            previousMouseX = e.clientX;
-            previousMouseY = e.clientY;
-        });
-
-        window.addEventListener('mouseup', () => { isDragging = false; });
-
-        // Touch Interaction
-        window.addEventListener('touchstart', (e) => {
+            previousMousePos = { x: e.clientX, y: e.clientY };
+            targetAngularVelocity = 0.12;
             audioEngine.init();
-            isDragging = true;
-            previousMouseX = e.touches[0].clientX;
-            previousMouseY = e.touches[0].clientY;
-            audioEngine.playWhoosh(1.2);
+            audioEngine.playWhoosh(1.4);
+            triggerHaptic(15);
         });
 
-        window.addEventListener('touchmove', (e) => {
+        window.addEventListener('pointermove', (e) => {
             if (!isDragging) return;
-            const deltaX = e.touches[0].clientX - previousMouseX;
-            const deltaY = e.touches[0].clientY - previousMouseY;
+            const deltaX = e.clientX - previousMousePos.x;
+            const deltaY = e.clientY - previousMousePos.y;
 
             targetRotationY += deltaX * 0.008;
             targetRotationX += deltaY * 0.008;
+            previousMousePos = { x: e.clientX, y: e.clientY };
 
-            previousMouseX = e.touches[0].clientX;
-            previousMouseY = e.touches[0].clientY;
+            if (Math.abs(deltaX) > 15) triggerHaptic(8);
         });
 
-        window.addEventListener('touchend', () => { isDragging = false; });
+        window.addEventListener('pointerup', () => {
+            isDragging = false;
+            targetAngularVelocity = isOverdrive ? 0.09 : 0.035;
+        });
 
-        // Exploded View Transition (GSAP)
-        window.toggleExplodedView = function() {
+        // Switch Arsenal Tab
+        window.switchArsenal = function(type) {
             audioEngine.init();
+            triggerHaptic(25);
+            currentArsenal = type;
+
+            document.querySelectorAll('.arsenal-tab').forEach(t => t.classList.remove('active'));
+            const tabIdx = type === 'chakra' ? 0 : type === 'trishula' ? 1 : 2;
+            document.querySelectorAll('.arsenal-tab')[tabIdx].classList.add('active');
+
+            const titleEl = document.getElementById('artifact-title');
+            const subEl = document.getElementById('artifact-sub');
+
+            // Reset exploded view if active
+            if (isExploded) toggleExplodedView();
+
+            if (type === 'chakra') {
+                audioEngine.playWhoosh(1.6);
+                titleEl.innerText = "SUDARSHANA CHAKRA";
+                subEl.innerText = "KINETIC DISK OF SUPREME DISCRIMINATION";
+                gsap.to(chakraGroup.scale, { x: 1, y: 1, z: 1, duration: 0.6, ease: "power2.out" });
+                chakraGroup.visible = true;
+                trishulaGroup.visible = false;
+                vyuhaGroup.visible = false;
+                document.getElementById('btn-explode').style.display = 'flex';
+            } else if (type === 'trishula') {
+                audioEngine.playDamru();
+                titleEl.innerText = "MAHASHIVA TRISHULA";
+                subEl.innerText = "TRI-MODAL SOVEREIGNTY OVER PAST, PRESENT & FUTURE";
+                chakraGroup.visible = false;
+                trishulaGroup.visible = true;
+                vyuhaGroup.visible = false;
+                gsap.fromTo(trishulaGroup.scale, { x: 0.2, y: 0.2, z: 0.2 }, { x: 1, y: 1, z: 1, duration: 0.7, ease: "back.out(1.5)" });
+                document.getElementById('btn-explode').style.display = 'none';
+            } else if (type === 'vyuha') {
+                audioEngine.playImpact(42);
+                titleEl.innerText = "CHAKRAVYUHA BATTLE GRID";
+                subEl.innerText = "7-TIER IMPENETRABLE LABYRINTH FORMATION";
+                chakraGroup.visible = false;
+                trishulaGroup.visible = false;
+                vyuhaGroup.visible = true;
+                gsap.fromTo(vyuhaGroup.scale, { x: 0.3, y: 0.3, z: 0.3 }, { x: 1, y: 1, z: 1, duration: 0.8, ease: "power2.out" });
+                document.getElementById('btn-explode').style.display = 'none';
+            }
+        };
+
+        // Exploded CAD View
+        window.toggleExplodedView = function() {
+            if (currentArsenal !== 'chakra') return;
+            audioEngine.init();
+            audioEngine.playWhoosh(1.5);
+            audioEngine.playImpact(50);
+            triggerHaptic(30);
+
             isExploded = !isExploded;
             const btn = document.getElementById('btn-explode');
-            const txt = document.getElementById('explode-text');
-            const stateVal = document.getElementById('state-val');
+            const stateEl = document.getElementById('state-val');
 
             if (isExploded) {
-                audioEngine.playImpact(70);
                 btn.classList.add('active');
-                txt.innerText = "UNIFY CHAKRA";
-                stateVal.innerText = "EXPLODED ARCHITECTURE";
-                stateVal.style.color = "#00FF88";
-
-                gsap.to(layer1_Hub.position, { z: 1.8, duration: 1.2, ease: "power3.out" });
-                gsap.to(layer2_Blades.position, { z: 0.6, duration: 1.2, ease: "power3.out" });
-                gsap.to(layer3_Rings.position, { z: -0.9, duration: 1.2, ease: "power3.out" });
-                gsap.to(layer4_HUD.position, { z: -2.2, duration: 1.2, ease: "power3.out" });
-                gsap.to(camera.position, { z: 13.5, duration: 1.2, ease: "power3.out" });
+                stateEl.innerText = "EXPLODED CAD VIEW";
+                gsap.to(layer1_Hub.position, { z: 2.8, duration: 1.0, ease: "elastic.out(1, 0.75)" });
+                gsap.to(layer2_Blades.position, { z: 1.0, duration: 1.0, ease: "elastic.out(1, 0.75)" });
+                gsap.to(layer3_Rings.position, { z: -1.2, duration: 1.0, ease: "elastic.out(1, 0.75)" });
+                gsap.to(chakraGroup.rotation, { x: 0.65, y: -0.4, duration: 1.2, ease: "power2.out" });
+                gsap.to(camera.position, { z: 13.5, duration: 1.0 });
             } else {
-                audioEngine.playImpact(45);
                 btn.classList.remove('active');
-                txt.innerText = "EXPLODE LAYERS";
-                stateVal.innerText = "ACTIVE RESTRAINT";
-                stateVal.style.color = "#FFF";
-
-                gsap.to(layer1_Hub.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
-                gsap.to(layer2_Blades.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
-                gsap.to(layer3_Rings.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
-                gsap.to(layer4_HUD.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
-                gsap.to(camera.position, { z: 11, duration: 1.0, ease: "power3.inOut" });
+                stateEl.innerText = "ACTIVE RESTRAINT";
+                gsap.to(layer1_Hub.position, { z: 0, duration: 0.8, ease: "power3.inOut" });
+                gsap.to(layer2_Blades.position, { z: 0, duration: 0.8, ease: "power3.inOut" });
+                gsap.to(layer3_Rings.position, { z: 0, duration: 0.8, ease: "power3.inOut" });
+                gsap.to(chakraGroup.rotation, { x: 0, y: 0, duration: 0.8, ease: "power2.out" });
+                gsap.to(camera.position, { z: 11, duration: 0.8 });
             }
         };
 
-        // Kshatriya Surge / Overdrive Mode
+        // Kshatriya Surge Overdrive
         window.toggleOverdrive = function() {
             audioEngine.init();
+            audioEngine.playImpact(38);
+            triggerHaptic(50);
+
             isOverdrive = !isOverdrive;
             const btn = document.getElementById('btn-overdrive');
-            const stateVal = document.getElementById('state-val');
+            const stateEl = document.getElementById('state-val');
 
             if (isOverdrive) {
-                audioEngine.playImpact(90);
-                audioEngine.playChime();
                 btn.classList.add('active');
-                stateVal.innerText = "KSHATRIYA SURGE";
-                stateVal.style.color = "#FF3366";
-                targetAngularVelocity = 0.12;
-                keyGoldLight.color.setHex(0xFF4422);
-                coreGlowLight.intensity = 8.0;
-
-                gsap.to(camera.position, { z: 9.2, duration: 0.8, ease: "back.out(2)" });
+                stateEl.innerText = "KSHATRIYA SURGE";
+                targetAngularVelocity = 0.16;
+                gsap.to(bloomPass, { strength: 3.2, radius: 0.85, duration: 0.4 });
+                gsap.to(coreGlowLight, { intensity: 9.0, distance: 15, duration: 0.3 });
+                gsap.to(keyGoldLight, { intensity: 6.0, duration: 0.3 });
+                gsap.to(camera.position, { z: 9.8, duration: 0.5, ease: "back.out(2)" });
             } else {
-                audioEngine.playImpact(50);
                 btn.classList.remove('active');
-                stateVal.innerText = isExploded ? "EXPLODED ARCHITECTURE" : "ACTIVE RESTRAINT";
-                stateVal.style.color = isExploded ? "#00FF88" : "#FFF";
-                targetAngularVelocity = 0.02;
-                keyGoldLight.color.setHex(0xFFD700);
-                coreGlowLight.intensity = 4.0;
-
-                gsap.to(camera.position, { z: isExploded ? 13.5 : 11, duration: 0.8, ease: "power2.out" });
+                stateEl.innerText = isExploded ? "EXPLODED CAD VIEW" : "ACTIVE RESTRAINT";
+                targetAngularVelocity = 0.035;
+                gsap.to(bloomPass, { strength: 1.5, radius: 0.4, duration: 0.6 });
+                gsap.to(coreGlowLight, { intensity: 4.5, distance: 9, duration: 0.5 });
+                gsap.to(keyGoldLight, { intensity: 3.8, duration: 0.5 });
+                gsap.to(camera.position, { z: isExploded ? 13.5 : 11, duration: 0.6 });
             }
         };
 
-        // --- 7. Floating 2D HUD Tooltips Synced to 3D Nodes ---
-        const labelContainer = document.getElementById('label-container');
-        const labelElements = [];
+        // Gyroscope Control
+        window.toggleGyro = function() {
+            audioEngine.init();
+            triggerHaptic(20);
+            const btn = document.getElementById('btn-gyro');
 
-        nodesData.forEach((nd) => {
-            const div = document.createElement('div');
-            div.className = 'floating-label';
-            div.innerHTML = `<div class="node-accent"></div><span>${nd.title}</span>`;
-            labelContainer.appendChild(div);
-            labelElements.push({ el: div, nd: nd });
-        });
+            if (!gyroActive) {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission().then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            gyroActive = true;
+                            btn.classList.add('active');
+                        }
+                    }).catch(console.error);
+                } else if ('ondeviceorientation' in window) {
+                    window.addEventListener('deviceorientation', handleOrientation);
+                    gyroActive = true;
+                    btn.classList.add('active');
+                }
+            } else {
+                window.removeEventListener('deviceorientation', handleOrientation);
+                gyroActive = false;
+                btn.classList.remove('active');
+            }
+        };
 
-        // --- 8. Render Animation Loop ---
+        function handleOrientation(event) {
+            if (!gyroActive) return;
+            const gamma = event.gamma || 0; // Left-Right [-90, 90]
+            const beta = event.beta || 0;   // Front-Back [-180, 180]
+            targetRotationY = (gamma / 45) * 0.6;
+            targetRotationX = ((beta - 45) / 45) * 0.6;
+        }
+
+        // --- 9. Render Animation Loop ---
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-
+            const delta = clock.getDelta();
             const elapsedTime = clock.getElapsedTime();
 
-            // Smooth Angular Velocity Interpolation
-            angularVelocity += (targetAngularVelocity - angularVelocity) * 0.04;
+            // Angular Velocity Interpolation
+            angularVelocity += (targetAngularVelocity - angularVelocity) * 0.05;
 
-            // Rotate Layers at Counter-Harmonic Speeds
-            layer1_Hub.rotation.z += angularVelocity * 1.5;
-            layer2_Blades.rotation.z -= angularVelocity * 1.0;
-            layer3_Rings.rotation.z += angularVelocity * 0.4;
-            layer4_HUD.rotation.z -= angularVelocity * 0.2;
+            // Audio Drone Update
+            audioEngine.updateDrone(angularVelocity / 0.16);
+
+            // Rotate Chakra Layers
+            if (chakraGroup.visible) {
+                layer1_Hub.rotation.z += angularVelocity * 1.5;
+                layer2_Blades.rotation.z -= angularVelocity * 1.0;
+                layer3_Rings.rotation.z += angularVelocity * 0.4;
+            }
+
+            // Rotate Trishula Prongs & Resonant Sway
+            if (trishulaGroup.visible) {
+                trishulaGroup.rotation.z = Math.sin(elapsedTime * 2.0) * 0.08;
+                trishulaGroup.rotation.y += angularVelocity * 0.6;
+            }
+
+            // Rotate Chakravyuha Concentric Tiers
+            if (vyuhaGroup.visible) {
+                vyuhaRings.forEach(vr => {
+                    vr.group.rotation.z += vr.speed * angularVelocity * 1.5;
+                });
+                guruDronaCore.rotation.y += angularVelocity * 1.2;
+                guruDronaCore.rotation.x += angularVelocity * 0.8;
+            }
 
             // Smooth Drag Inertia
-            chakraGroup.rotation.x += (targetRotationX - chakraGroup.rotation.x) * 0.08;
-            chakraGroup.rotation.y += (targetRotationY - chakraGroup.rotation.y) * 0.08;
+            masterGroup.rotation.x += (targetRotationX - masterGroup.rotation.x) * 0.08;
+            masterGroup.rotation.y += (targetRotationY - masterGroup.rotation.y) * 0.08;
 
-            // Breathing Pulse on Core
-            const corePulse = 1.0 + Math.sin(elapsedTime * 3.5) * 0.04;
-            layer1_Hub.scale.set(corePulse, corePulse, corePulse);
+            // Core Breathing Pulse
+            const corePulse = 1.0 + Math.sin(elapsedTime * 4.0) * 0.04;
+            coreMesh.scale.set(corePulse, corePulse, corePulse);
 
             // Update Particle Field
             const positions = particleSystem.geometry.attributes.position.array;
             for (let i = 0; i < particleCount; i++) {
                 const idx = i * 3;
                 positions[idx + 1] += particleVel[i].y;
-                positions[idx] += Math.sin(elapsedTime + particleVel[i].phase) * 0.004;
-
-                // Reset particle to bottom when it rises above view
+                positions[idx] += Math.sin(elapsedTime + particleVel[i].phase) * 0.003;
                 if (positions[idx + 1] > 8) {
                     positions[idx + 1] = -8;
                     positions[idx] = (Math.random() - 0.5) * 16;
@@ -754,51 +1099,34 @@
             }
             particleSystem.geometry.attributes.position.needsUpdate = true;
 
-            // Update 2D Floating Labels Projection from 3D Space
-            nodeMeshes.forEach((nm, idx) => {
-                const worldPos = new THREE.Vector3();
-                nm.group.getWorldPosition(worldPos);
-
-                const screenPos = worldPos.clone().project(camera);
-                const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                const y = (screenPos.y * -0.5 + 0.5) * window.innerHeight;
-
-                const labelObj = labelElements[idx];
-                if (screenPos.z < 1.0) {
-                    labelObj.el.style.opacity = '1';
-                    labelObj.el.style.left = `${x}px`;
-                    labelObj.el.style.top = `${y - 18}px`;
-                } else {
-                    labelObj.el.style.opacity = '0';
-                }
-            });
-
             // Update Telemetry Display
-            const rotDeg = Math.abs(angularVelocity * 180 / Math.PI * 10).toFixed(1);
-            document.getElementById('rot-val').innerText = `${rotDeg} RPM`;
+            const rpm = Math.abs(angularVelocity * 180 / Math.PI * 18).toFixed(1);
+            document.getElementById('rot-val').innerText = `${rpm} RPM`;
 
-            renderer.render(scene, camera);
+            // Post-Processing Composer Render
+            composer.render();
         }
         animate();
 
-        // Responsive Resize
+        // Resize Handler
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        // --- 9. Automated Virtual Interaction Engine (For Playwright Recording) ---
+        // --- 10. Automated Capture Sequence for 60 FPS Viral Recording ---
         window.runAutomatedDemo = function() {
             const pointer = document.getElementById('virtual-pointer');
             pointer.style.display = 'block';
 
             const tl = gsap.timeline();
 
-            // 0s - 2s: Pointer enters and drags Chakra
+            // 0s - 2s: Enter and drag Chakra with optical bloom
             tl.set(pointer, { left: "80%", top: "60%", opacity: 0 })
-              .to(pointer, { opacity: 1, duration: 0.5 })
-              .to(pointer, { left: "50%", top: "45%", duration: 0.8, ease: "power2.out" })
+              .to(pointer, { opacity: 1, duration: 0.4 })
+              .to(pointer, { left: "50%", top: "45%", duration: 0.6, ease: "power2.out" })
               .call(() => {
                   pointer.classList.add('clicking');
                   audioEngine.init();
@@ -807,19 +1135,17 @@
               .to(pointer, {
                   left: "25%",
                   top: "35%",
-                  duration: 1.2,
+                  duration: 1.0,
                   ease: "power1.inOut",
                   onUpdate: function() {
                       targetRotationY += 0.08;
-                      targetRotationX += 0.03;
+                      targetRotationX += 0.04;
                   }
               })
-              .call(() => {
-                  pointer.classList.remove('clicking');
-              })
+              .call(() => { pointer.classList.remove('clicking'); })
 
-              // 2.5s: Pointer moves to "EXPLODE LAYERS" button and clicks
-              .to(pointer, { left: "42%", top: "94%", duration: 0.9, ease: "power2.inOut" })
+              // 2.2s: Tap "EXPLODE CAD" button
+              .to(pointer, { left: "28%", top: "95%", duration: 0.8, ease: "power2.inOut" })
               .call(() => {
                   pointer.classList.add('clicking');
                   window.toggleExplodedView();
@@ -827,17 +1153,16 @@
               .to({}, { duration: 0.2 })
               .call(() => { pointer.classList.remove('clicking'); })
 
-              // 4.5s: Pointer orbits around exploded 3D layers
-              .to(pointer, { left: "70%", top: "40%", duration: 1.0, ease: "power2.out" })
+              // 4.0s: Orbit around exploded CAD layers
+              .to(pointer, { left: "70%", top: "45%", duration: 0.8, ease: "power2.out" })
               .call(() => {
                   pointer.classList.add('clicking');
-                  audioEngine.playWhoosh(1.8);
+                  audioEngine.playWhoosh(1.6);
               })
               .to(pointer, {
                   left: "30%",
                   top: "55%",
-                  duration: 1.4,
-                  ease: "power2.inOut",
+                  duration: 1.2,
                   onUpdate: function() {
                       targetRotationY += 0.12;
                       targetRotationX -= 0.05;
@@ -845,8 +1170,17 @@
               })
               .call(() => { pointer.classList.remove('clicking'); })
 
-              // 7s: Pointer clicks "KSHATRIYA SURGE" (Overdrive mode)
-              .to(pointer, { left: "58%", top: "94%", duration: 0.9, ease: "power2.inOut" })
+              // 6.2s: Tap "PLASMA" Material Button
+              .to(pointer, { left: "220px", top: "86%", duration: 0.7, ease: "power2.inOut" })
+              .call(() => {
+                  pointer.classList.add('clicking');
+                  window.applyMaterial('plasma');
+              })
+              .to({}, { duration: 0.2 })
+              .call(() => { pointer.classList.remove('clicking'); })
+
+              // 7.4s: Tap "KSHATRIYA SURGE"
+              .to(pointer, { left: "55%", top: "95%", duration: 0.7, ease: "power2.inOut" })
               .call(() => {
                   pointer.classList.add('clicking');
                   window.toggleOverdrive();
@@ -854,13 +1188,40 @@
               .to({}, { duration: 0.2 })
               .call(() => { pointer.classList.remove('clicking'); })
 
-              // 9s - 12s: Majestic final high-speed spin
-              .to(pointer, { left: "50%", top: "50%", opacity: 0, duration: 1.0 })
+              // 8.8s: Switch to TRISHULA tab
+              .to(pointer, { left: "50%", top: "14%", duration: 0.8, ease: "power2.inOut" })
+              .call(() => {
+                  pointer.classList.add('clicking');
+                  window.switchArsenal('trishula');
+              })
+              .to({}, { duration: 0.2 })
+              .call(() => { pointer.classList.remove('clicking'); })
+
+              // 10.2s: Spin Trishula in 3D
+              .to(pointer, { left: "75%", top: "50%", duration: 0.8, ease: "power2.out" })
+              .call(() => { pointer.classList.add('clicking'); })
+              .to(pointer, {
+                  left: "25%",
+                  top: "50%",
+                  duration: 1.2,
+                  onUpdate: function() { targetRotationY += 0.14; }
+              })
+              .call(() => { pointer.classList.remove('clicking'); })
+
+              // 12.0s: Switch to CHAKRAVYUHA tab
+              .to(pointer, { left: "62%", top: "14%", duration: 0.7, ease: "power2.inOut" })
+              .call(() => {
+                  pointer.classList.add('clicking');
+                  window.switchArsenal('vyuha');
+              })
+              .to({}, { duration: 0.2 })
+              .call(() => { pointer.classList.remove('clicking'); })
+
+              // 13.5s - 15.5s: Majestic final orbit
+              .to(pointer, { left: "50%", top: "50%", opacity: 0, duration: 0.8 })
               .to({}, {
-                  duration: 3.0,
-                  onUpdate: function() {
-                      targetRotationY += 0.02;
-                  }
+                  duration: 2.0,
+                  onUpdate: function() { targetRotationY += 0.03; }
               });
 
             return tl;
