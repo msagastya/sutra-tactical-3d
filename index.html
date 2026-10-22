@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>SUTRA & SWORD | 3D Sovereign Tactical Engine</title>
+    <!-- Modern Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Three.js and GSAP Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050608;
+            font-family: 'Rajdhani', sans-serif;
+            color: #E6C875;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Ambient Cinematic Glow & Vignette */
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 35%, rgba(0, 0, 0, 0.85) 90%, #000000 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+            z-index: 3;
+            opacity: 0.6;
+        }
+
+        /* High-Authority HUD Overlay */
+        .hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 40px 30px;
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .channel-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            border-radius: 6px;
+            background: rgba(15, 18, 24, 0.85);
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.2);
+            backdrop-filter: blur(12px);
+            font-family: 'Cinzel', serif;
+            font-size: 13px;
+            letter-spacing: 3px;
+            color: #F5E296;
+            text-transform: uppercase;
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #00FF88;
+            box-shadow: 0 0 10px #00FF88;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.4; transform: scale(0.9); }
+        }
+
+        .hero-title {
+            margin-top: 14px;
+            font-family: 'Cinzel', serif;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F5E296 45%, #C99738 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+
+        .hero-sub {
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: rgba(220, 200, 140, 0.7);
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* Telemetry Readouts */
+        .telemetry-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+        }
+
+        .telemetry-card {
+            background: rgba(10, 13, 18, 0.75);
+            border: 1px solid rgba(212, 175, 55, 0.25);
+            padding: 12px 18px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .telemetry-label {
+            font-size: 10px;
+            color: rgba(220, 200, 140, 0.5);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .telemetry-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FFF;
+            margin-top: 3px;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        /* Interactive Controls Bar */
+        .controls-bar {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: 14px;
+            pointer-events: auto;
+        }
+
+        .interactive-btn {
+            background: linear-gradient(135deg, rgba(30, 26, 18, 0.9), rgba(12, 14, 18, 0.95));
+            border: 1px solid rgba(212, 175, 55, 0.5);
+            color: #F5E296;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(212, 175, 55, 0.15);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .interactive-btn:hover {
+            border-color: #F5E296;
+            background: linear-gradient(135deg, rgba(50, 42, 28, 0.95), rgba(20, 24, 32, 0.98));
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .interactive-btn.active {
+            background: linear-gradient(135deg, #D4AF37, #99781E);
+            color: #000;
+            border-color: #FFF;
+            box-shadow: 0 0 35px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Simulated Touch/Cursor Pointer for Automated Capture */
+        #virtual-pointer {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 235, 140, 0.9) 0%, rgba(212, 175, 55, 0.4) 50%, transparent 70%);
+            border: 2px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 25px #D4AF37, 0 0 50px rgba(212, 175, 55, 0.6);
+            pointer-events: none;
+            z-index: 100;
+            transform: translate(-50%, -50%);
+            display: none;
+            transition: width 0.15s, height 0.15s;
+        }
+
+        #virtual-pointer.clicking {
+            width: 44px;
+            height: 44px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(212, 175, 55, 0.7) 60%, transparent 80%);
+            box-shadow: 0 0 40px #FFF, 0 0 70px #D4AF37;
+        }
+
+        /* 3D Dynamic Floating Node Tooltips */
+        .floating-label {
+            position: absolute;
+            background: rgba(10, 13, 18, 0.9);
+            border: 1px solid rgba(212, 175, 55, 0.6);
+            color: #FFF;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            pointer-events: none;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+            transform: translate(-50%, -100%);
+            white-space: nowrap;
+            transition: opacity 0.3s;
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .floating-label::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid rgba(212, 175, 55, 0.6);
+        }
+
+        .node-accent {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #D4AF37;
+            box-shadow: 0 0 8px #D4AF37;
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div class="vignette"></div>
+    <div class="scanlines"></div>
+    <div id="virtual-pointer"></div>
+
+    <div class="hud-overlay">
+        <!-- Header -->
+        <div class="header">
+            <div class="channel-badge">
+                <div class="live-dot"></div>
+                SUTRA & SWORD • TACTICAL ENGINE
+            </div>
+            <h1 class="hero-title">SUDARSHANA PROTOCOL</h1>
+            <div class="hero-sub">INTERACTIVE SACRED GEOMETRY • 3D ARENA</div>
+        </div>
+
+        <!-- Telemetry Bottom Row -->
+        <div class="telemetry-row">
+            <div class="telemetry-card">
+                <div class="telemetry-label">SYSTEM STATE</div>
+                <div class="telemetry-value" id="state-val">ACTIVE RESTRAINT</div>
+            </div>
+            <div class="telemetry-card" style="text-align: right;">
+                <div class="telemetry-label">CORE ANGULAR VELOCITY</div>
+                <div class="telemetry-value" id="rot-val">2.84 RAD/S</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Buttons -->
+    <div class="controls-bar">
+        <button class="interactive-btn" id="btn-explode" onclick="toggleExplodedView()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M3 12h3m12 0h3M12 3v3m0 12v3"/></svg>
+            <span id="explode-text">EXPLODE LAYERS</span>
+        </button>
+        <button class="interactive-btn" id="btn-overdrive" onclick="toggleOverdrive()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>KSHATRIYA SURGE</span>
+        </button>
+    </div>
+
+    <div id="label-container"></div>
+
+    <script>
+        // --- 1. Web Audio Synthesizer (Instant Dynamic Sound Effects) ---
+        class TacticalAudioEngine {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playWhoosh(intensity = 1.0) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(60, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(180 * intensity, this.ctx.currentTime + 0.15);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.4);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(300, this.ctx.currentTime);
+                filter.frequency.linearRampToValueAtTime(1200 * intensity, this.ctx.currentTime + 0.15);
+                filter.frequency.linearRampToValueAtTime(200, this.ctx.currentTime + 0.4);
+
+                gain.gain.setValueAtTime(0.01, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3 * intensity, this.ctx.currentTime + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.4);
+
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.45);
+            }
+            playImpact(freq = 55) {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq * 1.8, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq, this.ctx.currentTime + 0.08);
+                osc.frequency.exponentialRampToValueAtTime(28, this.ctx.currentTime + 0.5);
+
+                gain.gain.setValueAtTime(0.6, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.55);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.6);
+            }
+            playChime() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(880, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(1320, this.ctx.currentTime + 0.05);
+
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.85);
+            }
+        }
+        const audioEngine = new TacticalAudioEngine();
+
+        // --- 2. Three.js Scene Setup ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050608, 0.04);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 11);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.3;
+        container.appendChild(renderer.domElement);
+
+        // --- 3. Cinema Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffeedd, 0.6);
+        scene.add(ambientLight);
+
+        const keyGoldLight = new THREE.DirectionalLight(0xFFD700, 3.5);
+        keyGoldLight.position.set(5, 8, 7);
+        scene.add(keyGoldLight);
+
+        const rimCyanLight = new THREE.PointLight(0x00E5FF, 2.8, 15);
+        rimCyanLight.position.set(-6, -4, -3);
+        scene.add(rimCyanLight);
+
+        const coreGlowLight = new THREE.PointLight(0xFFAA00, 4.0, 8);
+        coreGlowLight.position.set(0, 0, 1);
+        scene.add(coreGlowLight);
+
+        // --- 4. Sudarshana Chakra Procedural Architecture ---
+        const chakraGroup = new THREE.Group();
+        scene.add(chakraGroup);
+
+        // Custom Gold Physical Materials
+        const goldMat = new THREE.MeshStandardMaterial({
+            color: 0xD4AF37,
+            metalness: 0.92,
+            roughness: 0.18,
+            emissive: 0x442D05,
+            emissiveIntensity: 0.2
+        });
+
+        const darkObsidianMat = new THREE.MeshStandardMaterial({
+            color: 0x111318,
+            metalness: 0.85,
+            roughness: 0.28
+        });
+
+        const glowingGoldWireMat = new THREE.MeshBasicMaterial({
+            color: 0xFFE082,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.35
+        });
+
+        // Layer 1: Core Bindu & Inner Hub
+        const layer1_Hub = new THREE.Group();
+        const coreGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.25, 32);
+        const coreMesh = new THREE.Mesh(coreGeo, goldMat);
+        coreMesh.rotation.x = Math.PI / 2;
+        layer1_Hub.add(coreMesh);
+
+        // Inner Sacred Star (Hexagram / Shatkona)
+        for (let i = 0; i < 2; i++) {
+            const triGeo = new THREE.ConeGeometry(0.55, 0.2, 3);
+            const triMesh = new THREE.Mesh(triGeo, goldMat);
+            triMesh.rotation.z = (i * Math.PI) + (Math.PI / 6);
+            triMesh.position.z = 0.14;
+            layer1_Hub.add(triMesh);
+        }
+        chakraGroup.add(layer1_Hub);
+
+        // Layer 2: 16-Blade Kinetic Serrated Saw
+        const layer2_Blades = new THREE.Group();
+        const bladeCount = 16;
+        for (let b = 0; b < bladeCount; b++) {
+            const angle = (b / bladeCount) * Math.PI * 2;
+            const bladeShape = new THREE.Shape();
+            bladeShape.moveTo(0, 0.7);
+            bladeShape.lineTo(0.35, 1.3);
+            bladeShape.lineTo(0.0, 2.1);
+            bladeShape.lineTo(-0.15, 1.4);
+            bladeShape.closePath();
+
+            const extrudeSettings = { depth: 0.08, bevelEnabled: true, bevelSegments: 3, steps: 1, bevelSize: 0.03, bevelThickness: 0.03 };
+            const bladeGeo = new THREE.ExtrudeGeometry(bladeShape, extrudeSettings);
+            const bladeMesh = new THREE.Mesh(bladeGeo, goldMat);
+            bladeMesh.rotation.z = angle;
+            bladeMesh.position.z = -0.04;
+            layer2_Blades.add(bladeMesh);
+        }
+        chakraGroup.add(layer2_Blades);
+
+        // Layer 3: Concentric Yantra Rings & Runes
+        const layer3_Rings = new THREE.Group();
+        const ringGeo1 = new THREE.TorusGeometry(2.35, 0.05, 16, 100);
+        const ringMesh1 = new THREE.Mesh(ringGeo1, goldMat);
+        layer3_Rings.add(ringMesh1);
+
+        const ringGeo2 = new THREE.TorusGeometry(2.8, 0.04, 16, 100);
+        const ringMesh2 = new THREE.Mesh(ringGeo2, goldMat);
+        layer3_Rings.add(ringMesh2);
+
+        const wireRingGeo = new THREE.TorusGeometry(3.1, 0.12, 8, 48);
+        const wireRingMesh = new THREE.Mesh(wireRingGeo, glowingGoldWireMat);
+        layer3_Rings.add(wireRingMesh);
+        chakraGroup.add(layer3_Rings);
+
+        // Layer 4: Tactical HUD Orbit & Data Nodes
+        const layer4_HUD = new THREE.Group();
+        const hudOrbitGeo = new THREE.TorusGeometry(3.6, 0.02, 16, 128);
+        const hudOrbitMesh = new THREE.Mesh(hudOrbitGeo, new THREE.MeshBasicMaterial({ color: 0xD4AF37, transparent: true, opacity: 0.4 }));
+        layer4_HUD.add(hudOrbitMesh);
+
+        // 3 Interactive Tactical Nodes
+        const nodesData = [
+            { id: "node1", title: "IMMORTAL OBSERVER", subtitle: "GITA 2.20", angle: 0, radius: 3.6 },
+            { id: "node2", title: "ASYMMETRIC UPSIDE", subtitle: "GITA 2.37", angle: (Math.PI * 2) / 3, radius: 3.6 },
+            { id: "node3", title: "SOVEREIGN STATURE", subtitle: "GITA 2.34", angle: (Math.PI * 4) / 3, radius: 3.6 }
+        ];
+
+        const nodeMeshes = [];
+        nodesData.forEach((nd) => {
+            const nodeGrp = new THREE.Group();
+            const nGeo = new THREE.SphereGeometry(0.12, 16, 16);
+            const nMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: 0xD4AF37, emissiveIntensity: 1.5, roughness: 0.1 });
+            const nMesh = new THREE.Mesh(nGeo, nMat);
+            nodeGrp.add(nMesh);
+
+            // Glowing Outer Ring
+            const nRingGeo = new THREE.TorusGeometry(0.22, 0.02, 16, 32);
+            const nRingMesh = new THREE.Mesh(nRingGeo, new THREE.MeshBasicMaterial({ color: 0xD4AF37 }));
+            nodeGrp.add(nRingMesh);
+
+            nodeGrp.position.x = Math.cos(nd.angle) * nd.radius;
+            nodeGrp.position.y = Math.sin(nd.angle) * nd.radius;
+            layer4_HUD.add(nodeGrp);
+
+            nodeMeshes.push({ group: nodeGrp, data: nd });
+        });
+        chakraGroup.add(layer4_HUD);
+
+        // --- 5. Volumetric Golden Ember Particles ---
+        const particleCount = 450;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePos = new Float32Array(particleCount * 3);
+        const particleVel = [];
+
+        for (let p = 0; p < particleCount * 3; p += 3) {
+            particlePos[p] = (Math.random() - 0.5) * 16;
+            particlePos[p + 1] = (Math.random() - 0.5) * 16;
+            particlePos[p + 2] = (Math.random() - 0.5) * 8;
+
+            particleVel.push({
+                x: (Math.random() - 0.5) * 0.008,
+                y: Math.random() * 0.015 + 0.005,
+                z: (Math.random() - 0.5) * 0.008,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+
+        const particleMat = new THREE.PointsMaterial({
+            color: 0xF5E296,
+            size: 0.08,
+            transparent: true,
+            opacity: 0.75,
+            blending: THREE.AdditiveBlending
+        });
+        const particleSystem = new THREE.Points(particleGeo, particleMat);
+        scene.add(particleSystem);
+
+        // --- 6. Interactive State & Touch/Mouse Momentum Physics ---
+        let isExploded = false;
+        let isOverdrive = false;
+        let angularVelocity = 0.02;
+        let targetAngularVelocity = 0.02;
+
+        let isDragging = false;
+        let previousMouseX = 0;
+        let previousMouseY = 0;
+        let targetRotationX = 0.25;
+        let targetRotationY = 0;
+
+        window.addEventListener('mousedown', (e) => {
+            audioEngine.init();
+            isDragging = true;
+            previousMouseX = e.clientX;
+            previousMouseY = e.clientY;
+            audioEngine.playWhoosh(1.0);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - previousMouseX;
+            const deltaY = e.clientY - previousMouseY;
+
+            targetRotationY += deltaX * 0.006;
+            targetRotationX += deltaY * 0.006;
+
+            angularVelocity += Math.abs(deltaX) * 0.0008;
+
+            previousMouseX = e.clientX;
+            previousMouseY = e.clientY;
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        // Touch Interaction
+        window.addEventListener('touchstart', (e) => {
+            audioEngine.init();
+            isDragging = true;
+            previousMouseX = e.touches[0].clientX;
+            previousMouseY = e.touches[0].clientY;
+            audioEngine.playWhoosh(1.2);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.touches[0].clientX - previousMouseX;
+            const deltaY = e.touches[0].clientY - previousMouseY;
+
+            targetRotationY += deltaX * 0.008;
+            targetRotationX += deltaY * 0.008;
+
+            previousMouseX = e.touches[0].clientX;
+            previousMouseY = e.touches[0].clientY;
+        });
+
+        window.addEventListener('touchend', () => { isDragging = false; });
+
+        // Exploded View Transition (GSAP)
+        window.toggleExplodedView = function() {
+            audioEngine.init();
+            isExploded = !isExploded;
+            const btn = document.getElementById('btn-explode');
+            const txt = document.getElementById('explode-text');
+            const stateVal = document.getElementById('state-val');
+
+            if (isExploded) {
+                audioEngine.playImpact(70);
+                btn.classList.add('active');
+                txt.innerText = "UNIFY CHAKRA";
+                stateVal.innerText = "EXPLODED ARCHITECTURE";
+                stateVal.style.color = "#00FF88";
+
+                gsap.to(layer1_Hub.position, { z: 1.8, duration: 1.2, ease: "power3.out" });
+                gsap.to(layer2_Blades.position, { z: 0.6, duration: 1.2, ease: "power3.out" });
+                gsap.to(layer3_Rings.position, { z: -0.9, duration: 1.2, ease: "power3.out" });
+                gsap.to(layer4_HUD.position, { z: -2.2, duration: 1.2, ease: "power3.out" });
+                gsap.to(camera.position, { z: 13.5, duration: 1.2, ease: "power3.out" });
+            } else {
+                audioEngine.playImpact(45);
+                btn.classList.remove('active');
+                txt.innerText = "EXPLODE LAYERS";
+                stateVal.innerText = "ACTIVE RESTRAINT";
+                stateVal.style.color = "#FFF";
+
+                gsap.to(layer1_Hub.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
+                gsap.to(layer2_Blades.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
+                gsap.to(layer3_Rings.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
+                gsap.to(layer4_HUD.position, { z: 0, duration: 1.0, ease: "power3.inOut" });
+                gsap.to(camera.position, { z: 11, duration: 1.0, ease: "power3.inOut" });
+            }
+        };
+
+        // Kshatriya Surge / Overdrive Mode
+        window.toggleOverdrive = function() {
+            audioEngine.init();
+            isOverdrive = !isOverdrive;
+            const btn = document.getElementById('btn-overdrive');
+            const stateVal = document.getElementById('state-val');
+
+            if (isOverdrive) {
+                audioEngine.playImpact(90);
+                audioEngine.playChime();
+                btn.classList.add('active');
+                stateVal.innerText = "KSHATRIYA SURGE";
+                stateVal.style.color = "#FF3366";
+                targetAngularVelocity = 0.12;
+                keyGoldLight.color.setHex(0xFF4422);
+                coreGlowLight.intensity = 8.0;
+
+                gsap.to(camera.position, { z: 9.2, duration: 0.8, ease: "back.out(2)" });
+            } else {
+                audioEngine.playImpact(50);
+                btn.classList.remove('active');
+                stateVal.innerText = isExploded ? "EXPLODED ARCHITECTURE" : "ACTIVE RESTRAINT";
+                stateVal.style.color = isExploded ? "#00FF88" : "#FFF";
+                targetAngularVelocity = 0.02;
+                keyGoldLight.color.setHex(0xFFD700);
+                coreGlowLight.intensity = 4.0;
+
+                gsap.to(camera.position, { z: isExploded ? 13.5 : 11, duration: 0.8, ease: "power2.out" });
+            }
+        };
+
+        // --- 7. Floating 2D HUD Tooltips Synced to 3D Nodes ---
+        const labelContainer = document.getElementById('label-container');
+        const labelElements = [];
+
+        nodesData.forEach((nd) => {
+            const div = document.createElement('div');
+            div.className = 'floating-label';
+            div.innerHTML = `<div class="node-accent"></div><span>${nd.title}</span>`;
+            labelContainer.appendChild(div);
+            labelElements.push({ el: div, nd: nd });
+        });
+
+        // --- 8. Render Animation Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // Smooth Angular Velocity Interpolation
+            angularVelocity += (targetAngularVelocity - angularVelocity) * 0.04;
+
+            // Rotate Layers at Counter-Harmonic Speeds
+            layer1_Hub.rotation.z += angularVelocity * 1.5;
+            layer2_Blades.rotation.z -= angularVelocity * 1.0;
+            layer3_Rings.rotation.z += angularVelocity * 0.4;
+            layer4_HUD.rotation.z -= angularVelocity * 0.2;
+
+            // Smooth Drag Inertia
+            chakraGroup.rotation.x += (targetRotationX - chakraGroup.rotation.x) * 0.08;
+            chakraGroup.rotation.y += (targetRotationY - chakraGroup.rotation.y) * 0.08;
+
+            // Breathing Pulse on Core
+            const corePulse = 1.0 + Math.sin(elapsedTime * 3.5) * 0.04;
+            layer1_Hub.scale.set(corePulse, corePulse, corePulse);
+
+            // Update Particle Field
+            const positions = particleSystem.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                const idx = i * 3;
+                positions[idx + 1] += particleVel[i].y;
+                positions[idx] += Math.sin(elapsedTime + particleVel[i].phase) * 0.004;
+
+                // Reset particle to bottom when it rises above view
+                if (positions[idx + 1] > 8) {
+                    positions[idx + 1] = -8;
+                    positions[idx] = (Math.random() - 0.5) * 16;
+                }
+            }
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+
+            // Update 2D Floating Labels Projection from 3D Space
+            nodeMeshes.forEach((nm, idx) => {
+                const worldPos = new THREE.Vector3();
+                nm.group.getWorldPosition(worldPos);
+
+                const screenPos = worldPos.clone().project(camera);
+                const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                const y = (screenPos.y * -0.5 + 0.5) * window.innerHeight;
+
+                const labelObj = labelElements[idx];
+                if (screenPos.z < 1.0) {
+                    labelObj.el.style.opacity = '1';
+                    labelObj.el.style.left = `${x}px`;
+                    labelObj.el.style.top = `${y - 18}px`;
+                } else {
+                    labelObj.el.style.opacity = '0';
+                }
+            });
+
+            // Update Telemetry Display
+            const rotDeg = Math.abs(angularVelocity * 180 / Math.PI * 10).toFixed(1);
+            document.getElementById('rot-val').innerText = `${rotDeg} RPM`;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Responsive Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- 9. Automated Virtual Interaction Engine (For Playwright Recording) ---
+        window.runAutomatedDemo = function() {
+            const pointer = document.getElementById('virtual-pointer');
+            pointer.style.display = 'block';
+
+            const tl = gsap.timeline();
+
+            // 0s - 2s: Pointer enters and drags Chakra
+            tl.set(pointer, { left: "80%", top: "60%", opacity: 0 })
+              .to(pointer, { opacity: 1, duration: 0.5 })
+              .to(pointer, { left: "50%", top: "45%", duration: 0.8, ease: "power2.out" })
+              .call(() => {
+                  pointer.classList.add('clicking');
+                  audioEngine.init();
+                  audioEngine.playWhoosh(1.4);
+              })
+              .to(pointer, {
+                  left: "25%",
+                  top: "35%",
+                  duration: 1.2,
+                  ease: "power1.inOut",
+                  onUpdate: function() {
+                      targetRotationY += 0.08;
+                      targetRotationX += 0.03;
+                  }
+              })
+              .call(() => {
+                  pointer.classList.remove('clicking');
+              })
+
+              // 2.5s: Pointer moves to "EXPLODE LAYERS" button and clicks
+              .to(pointer, { left: "42%", top: "94%", duration: 0.9, ease: "power2.inOut" })
+              .call(() => {
+                  pointer.classList.add('clicking');
+                  window.toggleExplodedView();
+              })
+              .to({}, { duration: 0.2 })
+              .call(() => { pointer.classList.remove('clicking'); })
+
+              // 4.5s: Pointer orbits around exploded 3D layers
+              .to(pointer, { left: "70%", top: "40%", duration: 1.0, ease: "power2.out" })
+              .call(() => {
+                  pointer.classList.add('clicking');
+                  audioEngine.playWhoosh(1.8);
+              })
+              .to(pointer, {
+                  left: "30%",
+                  top: "55%",
+                  duration: 1.4,
+                  ease: "power2.inOut",
+                  onUpdate: function() {
+                      targetRotationY += 0.12;
+                      targetRotationX -= 0.05;
+                  }
+              })
+              .call(() => { pointer.classList.remove('clicking'); })
+
+              // 7s: Pointer clicks "KSHATRIYA SURGE" (Overdrive mode)
+              .to(pointer, { left: "58%", top: "94%", duration: 0.9, ease: "power2.inOut" })
+              .call(() => {
+                  pointer.classList.add('clicking');
+                  window.toggleOverdrive();
+              })
+              .to({}, { duration: 0.2 })
+              .call(() => { pointer.classList.remove('clicking'); })
+
+              // 9s - 12s: Majestic final high-speed spin
+              .to(pointer, { left: "50%", top: "50%", opacity: 0, duration: 1.0 })
+              .to({}, {
+                  duration: 3.0,
+                  onUpdate: function() {
+                      targetRotationY += 0.02;
+                  }
+              });
+
+            return tl;
+        };
+    </script>
+</body>
+</html>
